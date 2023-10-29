@@ -6,7 +6,8 @@ from .settings import SIMPLE
 
 HOST = os.getenv("OPENAI_API_BASE")
 HOST_TYPE = os.getenv("BACKEND_TYPE")  # default None == ChatCompletion
-WEBUI_API_SUFFIX = "/api/v1/generate"
+# WEBUI_API_SUFFIX = "/api/v1/generate"
+WEBUI_API_SUFFIX = "/api/generate"
 DEBUG = False
 
 
@@ -21,8 +22,16 @@ def get_webui_completion(prompt, settings=SIMPLE):
         raise ValueError(f"Provided OPENAI_API_BASE value ({HOST}) must begin with http:// or https://")
 
     try:
-        URI = urljoin(HOST.strip("/") + "/", WEBUI_API_SUFFIX.strip("/"))
-        response = requests.post(URI, json=request)
+        # URI = urljoin(HOST.strip("/") + "/", WEBUI_API_SUFFIX.strip("/"))
+        # response = requests.post(URI, json=request)
+        URI = f"{HOST}/api/generate/"
+        response = requests.post(
+            url=URI,
+            headers={"Content-Type": "application/json"},
+            json=request,
+        )
+        
+        
         if response.status_code == 200:
             result = response.json()
             result = result["results"][0]["text"]
@@ -34,6 +43,10 @@ def get_webui_completion(prompt, settings=SIMPLE):
             )
     except:
         # TODO handle gracefully
-        raise
+        optional_detail = response.json().get("error")
+        raise ValueError(
+            f"Ollama call failed with status code {response.status_code}."
+            f" Details: {optional_detail}"
+        )
 
     return result
